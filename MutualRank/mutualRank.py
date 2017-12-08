@@ -55,9 +55,9 @@ class MutualRank:
 				instance = self.data.Instances[index]
 				self.Worker2Instance.AddItem(worker, instance, instance.Quality)
 
-			neighbors = filter(lambda x: x.Index == worker.Index, self.data.WorkerNN)[0].Neighbors
+			neighbors = list(filter(lambda x: x.Index == worker.Index, self.data.WorkerNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
-				neighbor = filter(lambda x: x.Index == neighborPair.Index, self.data.Workers)[0]
+				neighbor = list(filter(lambda x: x.Index == neighborPair.Index, self.data.Workers))[0]
 				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality)
 
 		for instance in sorted(self.data.Instances, key=lambda x: x.Index, reverse=False):
@@ -65,9 +65,9 @@ class MutualRank:
 				worker = self.data.Workers[index]
 				self.Instance2Worker.AddItem(instance, worker, worker.Quality)
 
-			neighbors = filter(lambda x: x.Index == instance.Index, self.data.InstanceNN)[0].Neighbors
+			neighbors = list(filter(lambda x: x.Index == instance.Index, self.data.InstanceNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
-				neighbor = filter(lambda x: x.Index == neighborPair.Index, self.data.Instances)[0]
+				neighbor = list(filter(lambda x: x.Index == neighborPair.Index, self.data.Instances))[0]
 				self.Instance2Instance.AddItem(instance, neighbor, neighbor.Quality)
 
 		self.Worker2Instance.GetSumValue()
@@ -226,14 +226,14 @@ class MutualRank:
 			item.Score = 0
 		for i in range(len(self.Z)):
 			for j in range(len(self.Z[i])):
-				for key, value in self.Z[i][j].iteritems():
+				for key, value in self.Z[i][j].items():
 					item = self.GetItemByTupleIndex(key)
 					item.Score += (1-self.C) * self.W[i][j] * value / self.M[i][j] / self.SumW
 
 	def CalculateUncertainty(self):
 		for i in range(len(self.Z)):
 			for j in range(len(self.Z[i])):
-				for key, value in self.Z[i][j].iteritems():
+				for key, value in self.Z[i][j].items():
 					typeId, index = key
 					EZij = value / self.M[i][j]
 					qjj = 1 - 1.0 / self.Z[typeId][index][key] * self.M[typeId][index]
@@ -257,11 +257,11 @@ class MutualRank:
 		if self.WorkerUncertaintyMax == -1:
 			sortedWorker = sorted(self.data.Workers, key=lambda x: -x.Uncertainty, reverse=True)
 			self.WorkerUncertaintyMin = sortedWorker[-1].Uncertainty
-			self.WorkerUncertaintyMax = sortedWorker[len(sortedWorker) * 5 / 1000].Uncertainty
+			self.WorkerUncertaintyMax = sortedWorker[int(len(sortedWorker) * 5 / 1000)].Uncertainty
 
 			sortedInstance = sorted(self.data.Instances, key=lambda x: -x.Uncertainty, reverse=True)
 			self.InstanceUncertaintyMin = sortedInstance[-1].Uncertainty
-			self.InstanceUncertaintyMax = sortedInstance[len(sortedInstance) * 5 / 1000].Uncertainty
+			self.InstanceUncertaintyMax = sortedInstance[int(len(sortedInstance) * 5 / 1000)].Uncertainty
 
 		for worker in self.data.Workers:
 			worker.Uncertainty = (worker.Uncertainty - self.WorkerUncertaintyMin) / (self.WorkerUncertaintyMax - self.WorkerUncertaintyMin)
