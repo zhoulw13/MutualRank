@@ -1,3 +1,3 @@
-from Models import ProbabilitySparseMatrix
-from Models import Path
-from MutualRank import MutualRank
+from .models import ProbabilitySparseMatrix
+from .models import Path
+from .mutualRank import MutualRank

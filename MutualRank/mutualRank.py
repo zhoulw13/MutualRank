@@ -1,6 +1,6 @@
 import numpy as np
-from Models import ProbabilitySparseMatrix
-from Models import Path
+from .models import ProbabilitySparseMatrix
+from .models import Path
 import random
 
 class MutualRank:
