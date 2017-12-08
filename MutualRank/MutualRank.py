@@ -37,8 +37,8 @@ class MutualRank:
 
 		self.HaveModedItems = []
 
-		self.R = None # num of RW samples
-		self.C = None # threshold of skipping RW 
+		self.R = 1 # num of RW samples
+		self.C = 0.8 # threshold of skipping RW 
 
 		#type: List of Path
 		self.InvertedItem2Path = np.array([[[] for i in range(self.data.WorkerCount)], [[]for i in range(self.data.InstanceCount)]], dtype=np.object)
@@ -47,42 +47,48 @@ class MutualRank:
 		self.Worker2Instance = ProbabilitySparseMatrix(self.data.WorkerCount, self.data.InstanceCount)
 		self.Worker2Worker = ProbabilitySparseMatrix(self.data.WorkerCount, self.data.WorkerCount)
 
-		self.Instance2Instance = ProbabilitySparseMatrix(self.data.Instance, self.data.Instance)
-		self.Instance2Worker = ProbabilitySparseMatrix(self.data.Instance, self.data.WorkerCount)
+		self.Instance2Instance = ProbabilitySparseMatrix(self.data.InstanceCount, self.data.InstanceCount)
+		self.Instance2Worker = ProbabilitySparseMatrix(self.data.InstanceCount, self.data.WorkerCount)
 
 		for worker in sorted(self.data.Workers, key=lambda x: x.Index, reverse=False):
-			for instance in sorted(worker.Instances, key=lambda x: x.Index, reverse=False):
+			for index in sorted(worker.Instances, key=lambda x: x, reverse=False):
+				instance = self.data.Instances[index]
 				self.Worker2Instance.AddItem(worker, instance, instance.Quality)
-			for neighborPair in sorted(self.data.WorkerNN[worker], key=lambda x: x.Key.Index, reverse=False):
-				neighbor = neighborPair.Key
+
+			neighbors = filter(lambda x: x.Index == worker.Index, self.data.WorkerNN)[0].Neighbors
+			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
+				neighbor = filter(lambda x: x.Index == neighborPair.Index, self.data.Workers)[0]
 				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality)
 
 		for instance in sorted(self.data.Instances, key=lambda x: x.Index, reverse=False):
-			for neighborPair in sorted(self.data.InstanceNN[instance], key=lambda x: x.Key.Index, reverse=False):
-				neighbor = neighborPair.Key
-				self.Instance2Instance.AddItem(instance, neighbor, neighbor.Quality)
-			for worker in sorted(instance.Workers, key=lambda x: x.Index, reverse=False):
+			for index in sorted(instance.Workers, key=lambda x: x, reverse=False):
+				worker = self.data.Workers[index]
 				self.Instance2Worker.AddItem(instance, worker, worker.Quality)
 
-		Worker2Instance.GetSumValue()
-		Worker2Worker.GetSumValue()
+			neighbors = filter(lambda x: x.Index == instance.Index, self.data.InstanceNN)[0].Neighbors
+			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
+				neighbor = filter(lambda x: x.Index == neighborPair.Index, self.data.Instances)[0]
+				self.Instance2Instance.AddItem(instance, neighbor, neighbor.Quality)
 
-		Instance2Instance.GetSumValue()
-		Instance2Worker.GetSumValue()
+		self.Worker2Instance.GetSumValue()
+		self.Worker2Worker.GetSumValue()
+
+		self.Instance2Instance.GetSumValue()
+		self.Instance2Worker.GetSumValue()
 
 		self.Items = []
 		for worker in self.data.Workers:
-			Items.append(worker)
+			self.Items.append(worker)
 		for instance in self.data.Instances:
-			Items.append(instance)
+			self.Items.append(instance)
 		self.N = len(self.Items)
 
 		for item in self.Items:
-			typeId, index = GetTupleIndex(item)
+			typeId, index = self.GetTupleIndex(item)
 
 			self.W[typeId][index] = item.Quality
 
-			GetNormalizeValue(typeId, index)
+			self.GetNormalizeValue(typeId, index)
 
 			pi = 0.0
 			if typeId == self.WorkerTypeId:
@@ -165,7 +171,7 @@ class MutualRank:
 				if len(self.Worker2Instance.Srcs[item.Index]) != 0:
 					return self.SampleFromMultinomial(self.Worker2Instance, item.Index)
 				return None
-		elif item.Type = self.InstanceTypeId:
+		elif item.Type == self.InstanceTypeId:
 			nextType = random.uniform(0,1)*(np.sum(self.Wall, axis=0)[1])
 			findGoodSample = False
 			while not findGoodSample:
@@ -199,7 +205,7 @@ class MutualRank:
 		for i in range(len(path.Samples)):
 			typeId, index = path.Samples[i]
 			self.M[typeId][index] += 1
-			self.Q_sum[tyepId][index] += 1
+			self.Q_sum[typeId][index] += 1
 			qb = False
 			for j in range(i, len(path.Samples)):
 				vpass = path.Samples[j]
@@ -235,12 +241,12 @@ class MutualRank:
 					self.V[typeId][index] += pow(self.W[i][j], 2) / self.M[i][j] * VZij / pow(self.SumW, 2)
 
 		for item in self.Items:
-			index = self.GetTupleIndex(item)
+			tupleIndex = self.GetTupleIndex(item)
 			# item moded to be add
 			if item in self.HaveModedItems:
 				item.Uncertainty = 0.1
 			else:
-				typeId, index = item
+				typeId, index = tupleIndex
 				VMR = self.V[typeId][index] / item.Score
 				if VMR < 0:
 					item.Uncertainty = 0
@@ -293,7 +299,7 @@ class MutualRank:
 	def Run(self):
 		self.Initialize()
 		for item in self.Items:
-			self.TakeSampls(item, self.R)
+			self.TakeSamples(item, self.R)
 		self.NormalW()
 		self.CalculateRank()
 		self.CalculateUncertainty()

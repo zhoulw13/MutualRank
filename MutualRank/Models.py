@@ -15,7 +15,7 @@ class ProbabilitySparseMatrix:
 		self.SrcSumValue[srcId] += value
 
 		item = {'Src': src, 'Dest': dest, 'Value': value}
-		pos = GetSrcInsertPos(self.Srcs[srcId], item, self.SrcLastInsert[srcId])
+		pos = self.GetSrcInsertPos(self.Srcs[srcId], item, self.SrcLastInsert[srcId])
 		if pos != 0:
 			self.Srcs[srcId] = np.insert(self.Srcs[srcId], pos, item)
 		else:
@@ -23,10 +23,10 @@ class ProbabilitySparseMatrix:
 		self.SrcLastInsert[srcId] = pos
 
 	def GetSrcInsertPos(self, src, item, startpos):
-		var pos = 0
+		pos = 0
 		if startpos != None and src[startpos]['Dest'].Index < item['Dest'].Index:
 			pos = startpos
-		while src[pos] != None:
+		while startpos != None and pos < len(src):
 			if src[pos]['Dest'].Index > item['Dest'].Index:
 				return pos
 			pos += 1
@@ -41,7 +41,7 @@ class ProbabilitySparseMatrix:
 
 			sum = 0
 			pos = 0
-			while src[pos] != None:
+			while pos < len(src):
 				sum += src[pos]['Value']
 				sums[pos] = sum
 				items[pos] = src[pos]['Dest']
