@@ -253,7 +253,7 @@ class MutualRank:
 				else:
 					item.Uncertainty = VMR
 
-		# initialize bound
+		# initialize bound 
 		if self.WorkerUncertaintyMax == -1:
 			sortedWorker = sorted(self.data.Workers, key=lambda x: -x.Uncertainty, reverse=True)
 			self.WorkerUncertaintyMin = sortedWorker[-1].Uncertainty
@@ -290,8 +290,8 @@ class MutualRank:
 			f.write(str(output))
 
 		output = []
-		for instance in self.data.Workers:
-			output.append(worker.Uncertainty)
+		for instance in self.data.Instances:
+			output.append(instance.Uncertainty)
 		with open('instanceUncertainty.txt', 'w') as f:
 			f.write(str(output))
 
