@@ -265,35 +265,35 @@ class MutualRank:
 
 		for worker in self.data.Workers:
 			worker.Uncertainty = (worker.Uncertainty - self.WorkerUncertaintyMin) / (self.WorkerUncertaintyMax - self.WorkerUncertaintyMin)
-			worker.Uncertainty = min(0, max(1, worker.Uncertainty))
+			worker.Uncertainty = max(0, min(1, worker.Uncertainty))
 		for instance in self.data.Instances:
 			instance.Uncertainty = (instance.Uncertainty - self.InstanceUncertaintyMin) / (self.InstanceUncertaintyMax - self.InstanceUncertaintyMin)
-			instance.Uncertainty = min(0, max(1, instance.Uncertainty))
+			instance.Uncertainty = max(0, min(1, instance.Uncertainty))
 
 	def OutputScore(self):
 		output = []
 		for worker in self.data.Workers:
 			output.append(worker.Score)
 		with open('workerScore.txt', 'w') as f:
-			f.write(str(output))
+			f.write('\n'.join([str(x) for x in output]))
 		
 		output = []
 		for worker in self.data.Workers:
 			output.append(worker.Uncertainty)
 		with open('workerUncertainty.txt', 'w') as f:
-			f.write(str(output))
+			f.write('\n'.join([str(x) for x in output]))
 
 		output = []
 		for instance in self.data.Instances:
 			output.append(instance.Score)
 		with open('instanceScore.txt', 'w') as f:
-			f.write(str(output))
+			f.write('\n'.join([str(x) for x in output]))
 
 		output = []
 		for instance in self.data.Instances:
 			output.append(instance.Uncertainty)
 		with open('instanceUncertainty.txt', 'w') as f:
-			f.write(str(output))
+			f.write('\n'.join([str(x) for x in output]))
 
 
 	def Run(self):
