@@ -37,8 +37,8 @@ class MutualRank:
 
 		self.HaveModedItems = []
 
-		self.R = 1 # num of RW samples
-		self.C = 0.8 # threshold of skipping RW 
+		self.R = 20 # num of RW samples
+		self.C = 0.85 # threshold of skipping RW 
 
 		#type: List of Path
 		self.InvertedItem2Path = np.array([[[] for i in range(self.data.WorkerCount)], [[]for i in range(self.data.InstanceCount)]], dtype=np.object)
@@ -51,24 +51,24 @@ class MutualRank:
 		self.Instance2Worker = ProbabilitySparseMatrix(self.data.InstanceCount, self.data.WorkerCount)
 
 		for worker in sorted(self.data.Workers, key=lambda x: x.Index, reverse=False):
-			for index in sorted(worker.Instances, key=lambda x: x, reverse=False):
+			for index,sign in sorted(zip(worker.Instances, worker.Match) , key=lambda x: x[0], reverse=False):
 				instance = self.data.Instances[index]
-				self.Worker2Instance.AddItem(worker, instance, instance.Quality)
+				self.Worker2Instance.AddItem(worker, instance, 1/2+sign*(instance.Quality-1/2))
 
 			neighbors = list(filter(lambda x: x.Index == worker.Index, self.data.WorkerNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
 				neighbor = list(filter(lambda x: x.Index == neighborPair.Index, self.data.Workers))[0]
-				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality)
+				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality*neighborPair.Similarity)
 
 		for instance in sorted(self.data.Instances, key=lambda x: x.Index, reverse=False):
-			for index in sorted(instance.Workers, key=lambda x: x, reverse=False):
+			for index,sign in sorted(zip(instance.Workers, instance.Match), key=lambda x: x[0], reverse=False):
 				worker = self.data.Workers[index]
-				self.Instance2Worker.AddItem(instance, worker, worker.Quality)
+				self.Instance2Worker.AddItem(instance, worker, 1/2+sign*(worker.Quality-1/2))
 
 			neighbors = list(filter(lambda x: x.Index == instance.Index, self.data.InstanceNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
 				neighbor = list(filter(lambda x: x.Index == neighborPair.Index, self.data.Instances))[0]
-				self.Instance2Instance.AddItem(instance, neighbor, neighbor.Quality)
+				self.Instance2Instance.AddItem(instance, neighbor, neighbor.Quality*neighborPair.Similarity)
 
 		self.Worker2Instance.GetSumValue()
 		self.Worker2Worker.GetSumValue()
@@ -277,11 +277,13 @@ class MutualRank:
 		with open('workerScore.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
 		
+		'''
 		output = []
 		for worker in self.data.Workers:
 			output.append(worker.Uncertainty)
 		with open('workerUncertainty.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
+			'''
 
 		output = []
 		for instance in self.data.Instances:
@@ -289,11 +291,14 @@ class MutualRank:
 		with open('instanceScore.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
 
+
+		'''
 		output = []
 		for instance in self.data.Instances:
 			output.append(instance.Uncertainty)
 		with open('instanceUncertainty.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
+			'''
 
 
 	def Run(self):
@@ -302,7 +307,7 @@ class MutualRank:
 			self.TakeSamples(item, self.R)
 		self.NormalW()
 		self.CalculateRank()
-		self.CalculateUncertainty()
+		#self.CalculateUncertainty()
 		self.OutputScore()
 
 
