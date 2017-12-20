@@ -1,11 +1,8 @@
 from MutualRank import MutualRank
 from dataOrganize import dataOrganize
-from evaluate import evaluate
 
-evaluate('info', 40, 40)
-
-#data = dataOrganize('info')
-#print ("Data Loaded.")
+data = dataOrganize('info')
+print ("Data Loaded.")
 
 '''import os, json
 from easydict import EasyDict
@@ -17,5 +14,5 @@ manifest = EasyDict(json.load(open(os.path.join(folder,'manifest.json'))))
 print (data.WorkerNN[0].Neighbors)'''
 
 #data = EasyDict(json.load(open("test.json")))
-#runTest = MutualRank(data)
-#runTest.Run()
+runTest = MutualRank(data)
+runTest.Run()

@@ -10,7 +10,7 @@ class MutualRank:
 
 	def Initialize(self):
 		#initialize variables
-		self.Wall = np.array([[0.8,0.2],[0.8,0.2]], dtype=np.double)
+		self.Wall = np.array([[0.5,0.5],[0.5,0.5]], dtype=np.double)
 		
 		self.WorkerTypeId = 0
 		self.InstanceTypeId = 1

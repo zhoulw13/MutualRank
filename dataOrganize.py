@@ -37,7 +37,7 @@ def dataOrganize(folder):
 			'Index': i,
 			'Workers': [],
 			'Match': [],
-			'Quality': 1,
+			'Quality': 1-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
 			'Uncertainty': dynamic_info.Uncertainty[i],
 		}))
 		data.InstanceNN.append(EasyDict({
@@ -59,7 +59,7 @@ def dataOrganize(folder):
 					data.Workers[j].Match.append(-1)
 					data.Instances[i].Match.append(-1)
 
-
+	'''
 	# instance quality
 	for i in range(data.InstanceCount):
 		label = dynamic_info.PosteriorDistribution[i].index(max(dynamic_info.PosteriorDistribution[i]))
@@ -70,7 +70,7 @@ def dataOrganize(folder):
 				total += data.Workers[j].Quality
 				if l == label:
 					right += data.Workers[j].Quality
-		data.Instances[i].Quality = right / total
+		data.Instances[i].Quality = right / total'''
 	
 	# instance similarity graph
 	index = 0
