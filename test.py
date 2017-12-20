@@ -2,7 +2,7 @@ from MutualRank import MutualRank
 from dataOrganize import dataOrganize
 from evaluate import evaluate
 
-evaluate('info', 20, 20)
+evaluate('info', 40, 40)
 
 #data = dataOrganize('info')
 #print ("Data Loaded.")
