@@ -10,7 +10,7 @@ class MutualRank:
 
 	def Initialize(self):
 		#initialize variables
-		self.Wall = np.array([[0.5,0.5],[0.5,0.5]], dtype=np.double)
+		self.Wall = np.array([[0.7,0.3],[0.7,0.3]], dtype=np.double)
 		
 		self.WorkerTypeId = 0
 		self.InstanceTypeId = 1
@@ -37,7 +37,7 @@ class MutualRank:
 
 		self.HaveModedItems = []
 
-		self.R = 20 # num of RW samples
+		self.R = 20 # num of RW pathes for each item
 		self.C = 0.85 # threshold of skipping RW 
 
 		#type: List of Path
@@ -53,17 +53,19 @@ class MutualRank:
 		for worker in sorted(self.data.Workers, key=lambda x: x.Index, reverse=False):
 			for index,sign in sorted(zip(worker.Instances, worker.Match) , key=lambda x: x[0], reverse=False):
 				instance = self.data.Instances[index]
-				self.Worker2Instance.AddItem(worker, instance, 1/2+sign*(instance.Quality-1/2))
+				self.Worker2Instance.AddItem(worker, instance, instance.Quality)
 
 			neighbors = list(filter(lambda x: x.Index == worker.Index, self.data.WorkerNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
 				neighbor = list(filter(lambda x: x.Index == neighborPair.Index, self.data.Workers))[0]
-				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality*neighborPair.Similarity)
+				self.Worker2Worker.AddItem(worker, neighbor, neighbor.Quality)
 
 		for instance in sorted(self.data.Instances, key=lambda x: x.Index, reverse=False):
 			for index,sign in sorted(zip(instance.Workers, instance.Match), key=lambda x: x[0], reverse=False):
+				if sign == -1:
+					continue
 				worker = self.data.Workers[index]
-				self.Instance2Worker.AddItem(instance, worker, 1/2+sign*(worker.Quality-1/2))
+				self.Instance2Worker.AddItem(instance, worker, worker.Quality)
 
 			neighbors = list(filter(lambda x: x.Index == instance.Index, self.data.InstanceNN))[0].Neighbors
 			for neighborPair in sorted(neighbors, key=lambda x: x.Index, reverse=False):
@@ -178,6 +180,8 @@ class MutualRank:
 				if nextType < self.Wall[1,0]:
 					if len(self.Instance2Worker.Srcs[item.Index]) != 0:
 						findGoodSample = True
+					else:
+						return None
 				else:
 					if len(self.Instance2Instance.Srcs[item.Index]) != 0:
 						findGoodSample = True
@@ -303,8 +307,12 @@ class MutualRank:
 
 	def Run(self):
 		self.Initialize()
-		for item in self.Items:
+		print ('Initialized.')
+
+		for i,item in enumerate(self.Items):
 			self.TakeSamples(item, self.R)
+		print ('Sampled.')
+
 		self.NormalW()
 		self.CalculateRank()
 		#self.CalculateUncertainty()

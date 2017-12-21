@@ -1,7 +1,8 @@
 import os, json
 from easydict import EasyDict
+import numpy as np
 
-def dataOrganize(folder):
+def dataReorganize(folder):
 	if os.path.isfile(folder+'.json'):
 		return EasyDict(json.load(open(folder+'.json')))
 
@@ -37,7 +38,7 @@ def dataOrganize(folder):
 			'Index': i,
 			'Workers': [],
 			'Match': [],
-			'Quality': 1-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
+			'Quality': 1,#-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
 			'Uncertainty': dynamic_info.Uncertainty[i],
 		}))
 		data.InstanceNN.append(EasyDict({
@@ -59,7 +60,7 @@ def dataOrganize(folder):
 					data.Workers[j].Match.append(-1)
 					data.Instances[i].Match.append(-1)
 
-	'''
+	
 	# instance quality
 	for i in range(data.InstanceCount):
 		label = dynamic_info.PosteriorDistribution[i].index(max(dynamic_info.PosteriorDistribution[i]))
@@ -70,7 +71,7 @@ def dataOrganize(folder):
 				total += data.Workers[j].Quality
 				if l == label:
 					right += data.Workers[j].Quality
-		data.Instances[i].Quality = right / total'''
+		data.Instances[i].Quality = right / total
 	
 	# instance similarity graph
 	index = 0
@@ -88,15 +89,16 @@ def dataOrganize(folder):
 			index += 1
 
 	# worker similarity graph
+	'''
 	for i in range(data.WorkerCount):
 		for j in range(i+1, data.WorkerCount):
 			intersection = set(data.Workers[j].Instances).intersection(data.Workers[i].Instances)
-			if len(intersection) == 0:
-				continue
 			sameChoice = 0
 			for item in intersection:
 				if static_info.WorkerLabels[item][i] == static_info.WorkerLabels[item][j]:
 					sameChoice += 1
+			if len(intersection) == 0 or sameChoice == 0:
+				continue
 			similarity = sameChoice / len(intersection)
 			data.WorkerNN[i].Neighbors.append(EasyDict({
 				'Index': j,
@@ -106,6 +108,23 @@ def dataOrganize(folder):
 				'Index': i,
 				'Similarity': similarity
 			}))
+	'''
+	linkmap = np.zeros((data.WorkerCount, data.WorkerCount))
+	for i in range(data.WorkerCount):
+		for j,value in enumerate(data.Workers[i].Match):
+			if value == 1:
+				for k in data.Instances[j].Workers:
+					linkmap[i][k] += 1
+			else:
+				for k in data.Instances[j].Workers:
+					linkmap[i][k] -= 1
+		for j in range(data.WorkerCount):
+			if i != j and linkmap[i][j] > 0:
+				data.WorkerNN[j].Neighbors.append(EasyDict({
+					'Index': i
+				}))
+
+
 
 	with open(folder+'.json', 'w') as f:
 		json.dump(data, f)
