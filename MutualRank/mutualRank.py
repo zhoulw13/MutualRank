@@ -2,6 +2,7 @@ import numpy as np
 from .models import ProbabilitySparseMatrix
 from .models import Path
 import random
+import pickle
 
 class MutualRank:
 
@@ -251,6 +252,7 @@ class MutualRank:
 				item.Uncertainty = 0.1
 			else:
 				typeId, index = tupleIndex
+				print (self.V[typeId][index], item.Score)
 				VMR = self.V[typeId][index] / item.Score
 				if VMR < 0:
 					item.Uncertainty = 0
@@ -281,33 +283,33 @@ class MutualRank:
 		with open('workerScore.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
 		
-		'''
+		
 		output = []
 		for worker in self.data.Workers:
 			output.append(worker.Uncertainty)
 		with open('workerUncertainty.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
-			'''
-
+			
 		output = []
 		for instance in self.data.Instances:
 			output.append(instance.Score)
 		with open('instanceScore.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
 
-
-		'''
 		output = []
 		for instance in self.data.Instances:
 			output.append(instance.Uncertainty)
 		with open('instanceUncertainty.txt', 'w') as f:
 			f.write('\n'.join([str(x) for x in output]))
-			'''
+
 
 
 	def Run(self):
 		self.Initialize()
 		print ('Initialized.')
+
+		with open('class.txt', 'wb') as f:
+			pickle.dump(self, f)
 
 		for i,item in enumerate(self.Items):
 			self.TakeSamples(item, self.R)
@@ -315,7 +317,5 @@ class MutualRank:
 
 		self.NormalW()
 		self.CalculateRank()
-		#self.CalculateUncertainty()
+		self.CalculateUncertainty()
 		self.OutputScore()
-
-

@@ -24,8 +24,8 @@ def dataReorganize(folder):
 			'Index': i,
 			'Instances': [],
 			'Match': [],
-			'Quality': dynamic_info.WorkerAccuracy[i],
-			'Uncertainty': 1,
+			'Quality': dynamic_info.WorkerAccuracy[i]#,
+			#'Uncertainty': 1,
 		}))
 		data.WorkerNN.append(EasyDict({
 			'Index': i,
@@ -38,8 +38,8 @@ def dataReorganize(folder):
 			'Index': i,
 			'Workers': [],
 			'Match': [],
-			'Quality': 1,#-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
-			'Uncertainty': dynamic_info.Uncertainty[i],
+			'Quality': 1##-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
+			#'Uncertainty': dynamic_info.Uncertainty[i],
 		}))
 		data.InstanceNN.append(EasyDict({
 			'Index': i,
