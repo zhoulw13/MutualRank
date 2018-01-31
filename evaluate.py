@@ -46,9 +46,9 @@ def evaluate(folder, topW, topI):
 
 	print ('------------------')
 	print ('Our Confusing Instances')
-	with open('instanceScore.txt', 'r') as f:
+	with open('instanceUncertainty.txt', 'r') as f:
 		instanceScore = f.read().splitlines()
-	instanceOrder = sorted(range(manifest.InstanceTotalNum), key=lambda k: instanceScore[k])
+	instanceOrder = sorted(range(manifest.InstanceTotalNum), key=lambda k: instanceScore[k], reverse=True)
 	OurInstances = [abs(label_list[instanceOrder[i]]-static_info.true_labels[instanceOrder[i]]) for i in instanceOrder[0:topI]]
 	print (OurInstances)
 
