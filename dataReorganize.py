@@ -18,6 +18,9 @@ def dataReorganize(folder):
 	data.WorkerNN = []
 	data.InstanceNN = []
 
+	dynamic_info.PosteriorDistribution = np.array(dynamic_info.PosteriorDistribution).reshape(manifest.InstanceTotalNum, 4)
+	static_info.WorkerLabels = np.array(static_info.WorkerLabels).reshape(manifest.InstanceTotalNum, manifest.WorkerTotalNum)
+
 	for i in range(data.WorkerCount):
 		data.Workers.append(EasyDict({
 			'Type': 0,
@@ -48,7 +51,7 @@ def dataReorganize(folder):
 
 	# labeling relation
 	for i in range(data.InstanceCount):
-		posterior = dynamic_info.PosteriorDistribution[i].index(max(dynamic_info.PosteriorDistribution[i]))
+		posterior = np.argmax(dynamic_info.PosteriorDistribution[i])
 		for j,label in enumerate(static_info.WorkerLabels[i]):
 			if label != -1:
 				data.Workers[j].Instances.append(i)
@@ -63,7 +66,7 @@ def dataReorganize(folder):
 	
 	# instance quality
 	for i in range(data.InstanceCount):
-		label = dynamic_info.PosteriorDistribution[i].index(max(dynamic_info.PosteriorDistribution[i]))
+		posterior = np.argmax(dynamic_info.PosteriorDistribution[i])
 		total = 0
 		right = 0
 		for j,l in enumerate(static_info.WorkerLabels[i]):

@@ -1,0 +1,19 @@
+{"worker_id": 57, "class_list": [1,2,3,4]}
+{"worker_id": 28, "class_list": [1,2,3,4]}
+{"worker_id": 1, "class_list": [3,4]}
+{"worker_id": 2, "class_list": [1,2,3,4]}
+{"worker_id": 25, "class_list": [1,2,3,4]}
+{"worker_id": 30, "class_list": [1,2,3,4]}
+{"worker_id": 13, "class_list": [1,2,3,4]}
+{"worker_id": 55, "class_list": [1,2]}
+{"worker_id": 27, "class_list": [1,2]}
+{"worker_id": 34, "class_list": [1,2]}
+{"worker_id": 15, "class_list": [1,2]}
+{"worker_id": 21, "class_list": [1,2]}
+{"worker_id": 9, "class_list": [1,2]}
+{"worker_id": 36, "class_list": [3,4]}
+{"worker_id": 14, "class_list": [3,4]}
+
+57, 28, 2, 25, 30, 13
+1, 36, 14
+55, 27, 34, 15, 21, 9

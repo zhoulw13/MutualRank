@@ -2,7 +2,7 @@ from MutualRank import MutualRank
 from dataReorganize import dataReorganize
 import pickle
 
-data = dataReorganize('info')
+data = dataReorganize('real')
 print ("Data Loaded.")
 
 '''
