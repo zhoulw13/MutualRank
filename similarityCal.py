@@ -12,8 +12,6 @@ def similarityCal(folder):
 	data.InstanceCount = manifest.InstanceTotalNum
 	data.Workers = []
 	data.Instances = []
-	data.WorkerNN = []
-	data.InstanceNN = []
 
 	similarity = np.zeros((data.WorkerCount, data.WorkerCount))
 
@@ -29,10 +27,6 @@ def similarityCal(folder):
 			'Quality': dynamic_info.WorkerAccuracy[i],
 			'Uncertainty': 1,
 		}))
-		data.WorkerNN.append(EasyDict({
-			'Index': i,
-			'Neighbors': []
-		}))
 
 	for i in range(data.InstanceCount):
 		data.Instances.append(EasyDict({
@@ -40,113 +34,95 @@ def similarityCal(folder):
 			'Index': i,
 			'Workers': [],
 			'Match': [],
-			'Quality': 1,#-dynamic_info.Uncertainty[i]/max(dynamic_info.Uncertainty),
+			'Quality': 1,
 			'Uncertainty': dynamic_info.Uncertainty[i],
-		}))
-		data.InstanceNN.append(EasyDict({
-			'Index': i,
-			'Neighbors': []
 		}))
 
 	# labeling relation
 	for i in range(data.InstanceCount):
-		posterior = np.argmax(dynamic_info.PosteriorDistribution[i])
 		for j,label in enumerate(static_info.WorkerLabels[i]):
 			if label != -1:
 				data.Workers[j].Instances.append(i)
 				data.Instances[i].Workers.append(j)
-				if label == posterior:
-					data.Workers[j].Match.append(1)
-					data.Instances[i].Match.append(1)
-				else:
-					data.Workers[j].Match.append(-1)
-					data.Instances[i].Match.append(-1)
 
 	for i in range(data.WorkerCount):
 		for j in range(i+1, data.WorkerCount):
 			intersection = set(data.Workers[j].Instances).intersection(data.Workers[i].Instances)
 			sameChoice = 0
 			for item in intersection:
-				posterior = np.argmax(dynamic_info.PosteriorDistribution[item])
 				if static_info.WorkerLabels[item][i] == static_info.WorkerLabels[item][j]:
-					similarity[i][j] += 1 / np.log((np.sum(static_info.WorkerLabels[item] == static_info.WorkerLabels[item][i])))
-
-			#if len(intersection) == 0 or sameChoice == 0:
-			#	continue
-			
-			#similarity[i][j] = sameChoice / len(intersection)
+					similarity[i][j] += 1 / np.log(np.sum(static_info.WorkerLabels[item] == static_info.WorkerLabels[item][i]))
 			similarity[j][i] = similarity[i][j]
 
-	#return similarity, 1
-
 	cms = []
-	conditionNum = []
 	for i in range(data.WorkerCount):
-		confusion_matrix = np.zeros((4,4))
+		confusionMatrix = np.zeros((4,4))
 		for instance in data.Workers[i].Instances:
 			posterior = np.argmax(dynamic_info.PosteriorDistribution[instance])
-			#print(instance, posterior, dynamic_info.PosteriorDistribution[instance])
 			choice = static_info.WorkerLabels[instance][i] 
 
-			confusion_matrix[choice][posterior] += 1
+			confusionMatrix[choice][posterior] += 1
 
-		confusion_matrix = (confusion_matrix+1) / np.sum(confusion_matrix+1, axis=0)
-		cms.append(confusion_matrix)
-		conditionNum.append(np.linalg.cond(confusion_matrix))
+		confusionMatrix = (confusionMatrix+1) / np.sum(confusionMatrix+1, axis=0)
+		cms.append(confusionMatrix)
 
-	#print(cms[1])
-	#print(cms[2])
 	mix = []
-
 	for i in range(data.WorkerCount):
-		confusion_matrix = cms[i]
-		a = confusion_matrix[0,1]+confusion_matrix[1,0]
-		b = confusion_matrix[2,3]+confusion_matrix[3,2]
-		c = 0
-		for j in range(4):
-			for k in range(j+1, 4):
-				c += confusion_matrix[j,k]+confusion_matrix[k,j]
-		d = confusion_matrix[0,0]+confusion_matrix[1,1]
-		e = confusion_matrix[2,2]+confusion_matrix[3,3]
-		x = np.array([e*a, d*b, a*b])
-		print(i, x)
-		#print(i, a/2, b/2, c/12, d/2, e/2)
+		confusionMatrix = cms[i]
+		a = confusionMatrix[0,1]+confusionMatrix[1,0]
+		b = confusionMatrix[2,3]+confusionMatrix[3,2]
+		c = confusionMatrix[0,0]+confusionMatrix[1,1]
+		d = confusionMatrix[2,2]+confusionMatrix[3,3]
+		x = np.array([d*a, c*b, a*b, c*d])
 		mix.append(x)
-
-	#print (np.array(cms).shape)
-	#kmeans = KMeans(n_clusters=4, random_state=0).fit(np.array(cms))
-	#print (kmeans.labels_)
-	#for i in range(4):
-	#	print ([j for j,x in enumerate(kmeans.labels_) if x == i])
-		#print (i, static_info.WorkerType[i], np.linalg.cond(confusion_matrix))
-	#print  ([static_info.WorkerType[x] for x in sorted(range(data.WorkerCount), key=lambda x:conditionNum[x])])
-	#for i in [57, 28, 1, 2, 25, 30, 13, 55, 27, 34, 15, 21, 9, 36, 14]:
-	#	print (cms[i], i)
-		
+	mix = np.array(mix)
 
 	for i in range(data.WorkerCount):
 		for j in range(i+1, data.WorkerCount):
-			similarity[i][j] = 1 / (0.1+np.sum(np.square(mix[i]-mix[j])))
+			similarity[i][j] *= 1 / (0.1+np.sum(np.square(mix[i]-mix[j])))
 			similarity[j][i] = similarity[i][j]
 
 
-	return similarity, conditionNum #, static_info.WorkerType
+	return similarity
 
 
 def evaluate(neighbors):
-	hit = 0
-	classes = [[57, 28, 2, 25, 30, 13], [1, 36, 14], [55, 27, 34, 15, 21, 9]]
-	for spammer_class in classes:
-		for i in spammer_class:
-			for neighbor in neighbors[i]:
-				if neighbor in spammer_class:
-					hit += 1
-	print(hit)
+	a = [57, 28, 2, 25, 30, 13]
+	b = [1, 36, 14]
+	c = [55, 27, 34, 15, 21, 9]
+	hit = [0]*(len(a+b+c))
 
-import json
+	ind = 0
+	for spammer in a:
+		for neighbor in neighbors[spammer]:
+			if neighbor in a or neighbor in b or neighbor in c:
+				hit[ind] += 1
+		ind += 1
+	for spammer in b:
+		for neighbor in neighbors[spammer]:
+			if neighbor in a or neighbor in b:
+				hit[ind] += 1
+		ind += 1
+	for spammer in c:
+		for neighbor in neighbors[spammer]:
+			if neighbor in a or neighbor in c:
+				hit[ind] += 1
+		ind += 1
+
+
+	print(hit, str(sum(hit))+'/'+str(len(hit)*len(neighbors[0])))
 
 if __name__ == '__main__':
-	similarity, conditionNum = similarityCal('real')
+	similarity = similarityCal('real')
+
+	takeNum = 5
+	neighbors = []
+	
+	for i in range(len(similarity)):
+		neighbor = sorted(range(len(similarity)), key=lambda x: similarity[i][x], reverse=True)[:takeNum]
+		neighbors.append(neighbor)
+
+	evaluate(neighbors)
 
 	'''
 	x = {}
@@ -169,25 +145,4 @@ if __name__ == '__main__':
 	with open('data2.json', 'w') as fp:
 		json.dump(x, fp, sort_keys=True, indent=4)
 	'''
-
-	take_num = 2
-	for i in range(len(similarity)):
-		print(sorted(similarity[i], reverse=True)[:take_num])
-	
-
-	sums = 0
-	neighbors = []
-	
-	for i in range(len(similarity)):
-		neighbor = sorted(range(len(similarity)), key=lambda x: similarity[i][x], reverse=True)[:take_num]
-		neighbors.append(neighbor)
-		#print(i, neighbor)
-		#print (workerType[i], [workerType[x] for x in neighbor]
-		if i in [57, 28, 1, 2, 25, 30, 13, 55, 27, 34, 15, 21, 9, 36, 14]:
-			print (i, neighbor)
-		#sums += sum([workerType[x] == workerType[i] for x in neighbor])
-
-	evaluate(neighbors)
-
-	#print (sums/take_num/len(similarity))
 
